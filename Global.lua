@@ -24,8 +24,6 @@ evade = nil --'4a352e'
 stress = nil --'a25e12'
 target = nil --'c81580'
 
-ignorePlayerCheck = true
-
 function onload()
     enemy_target_locks = findObjectByNameAndType("Enemy Target Locks", "Infinite").getGUID()
     focus = findObjectByNameAndType("Focus", "Infinite").getGUID()
