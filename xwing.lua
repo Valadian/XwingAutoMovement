@@ -4,32 +4,41 @@
 -- X-Wing Auto Tokens - Hera Verito (Jstek), March 2016
 -- X-Wing Auto Bump Rewrite of Movement Code - Flolania, May 2016
 
+--Auto Movement
+undolist = {}
+undopos = {}
+undorot = {}
+namelist1 = {}
+locktimer = {}
+
+--Auto Dials
+dialpositions = {}
+
+--Collider Infomation
+BigShipList = {'https://paste.ee/r/LIxnJ','https://paste.ee/r/v9OYL','https://paste.ee/r/XoXqn','https://paste.ee/r/oOjRN','https://paste.ee/r/v8OYL','https://paste.ee/r/xBpMo','https://paste.ee/r/k4DLM','https://paste.ee/r/JavTd','http://pastebin.com/Tg5hdRTM'}
+
+-- Auto Actions
+enemy_target_locks = nil
+focus = nil --'beca0f'
+evade = nil --'4a352e'
+stress = nil --'a25e12'
+target = nil --'c81580'
+
+ignorePlayerCheck = true
+
 function onload()
-    --Auto Movement
-    undolist = {}
-    undopos = {}
-    undorot = {}
-    namelist1 = {}
-    locktimer = {}
-
-    --Auto Dials
-    dialpositions = {}
-
-    --Collider Infomation
-    BigShipList = {'https://paste.ee/r/LIxnJ','https://paste.ee/r/v9OYL','https://paste.ee/r/XoXqn','https://paste.ee/r/oOjRN','https://paste.ee/r/v8OYL','https://paste.ee/r/xBpMo','https://paste.ee/r/k4DLM','https://paste.ee/r/JavTd','http://pastebin.com/Tg5hdRTM'}
-
-    -- Auto Actions
-    focus = 'beca0f'
-    evade = '4a352e'
-    stress = 'a25e12'
-    target = 'c81580'
+    enemy_target_locks = findObjectByNameAndType("Enemy Target Locks", "Infinite").getGUID()
+    focus = findObjectByNameAndType("Focus", "Infinite").getGUID()
+    evade = findObjectByNameAndType("Evade", "Infinite").getGUID()
+    stress = findObjectByNameAndType("Stress", "Infinite").getGUID()
+    target = findObjectByNameAndType("Target Lock", "Infinite").getGUID()
 end
 
 function onObjectLeaveScriptingZone(zone, object)
     if object.tag == 'Card' and object.getDescription() ~= '' then
-        CardData = dialpositions[CardInArray(object.GetGUID())]
+        local CardData = dialpositions[CardInArray(object.GetGUID())]
         if CardData ~= nil then
-            obj = getObjectFromGUID(CardData["ShipGUID"])
+            local obj = getObjectFromGUID(CardData["ShipGUID"])
             if obj.getVar('HasDial') == true then
                 printToColor(CardData["ShipName"] .. ' already has a dial.', object.held_by_color, {0.2,0.2,0.8})
             else
@@ -52,8 +61,8 @@ end
 function PlayerCheck(Color, GUID)
     local PC = false
     if getPlayer(Color) ~= nil then
-        HandPos = getPlayer(Color).getPointerPosition()
-        DialPos = getObjectFromGUID(GUID).getPosition()
+        local HandPos = getPlayer(Color).getPointerPosition()
+        local DialPos = getObjectFromGUID(GUID).getPosition()
         if distance(HandPos['x'],HandPos['z'],DialPos['x'],DialPos['z']) < 2 then
             PC = true
         end
@@ -62,7 +71,7 @@ function PlayerCheck(Color, GUID)
 end
 
 function CardInArray(GUID)
-    CIAPos = nil
+    local CIAPos
     for i, card in ipairs(dialpositions) do
         if GUID == card["GUID"] then
             CIAPos = i
@@ -72,7 +81,7 @@ function CardInArray(GUID)
 end
 
 function CardFlipButton(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         object.setRotation({0,CardData["Rotation"][2],0})
         object.clearButtons()
@@ -85,7 +94,7 @@ function CardFlipButton(object)
 end
 
 function CardMoveButton(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         check(CardData["ShipGUID"],object.getDescription())
         object.clearButtons()
@@ -108,6 +117,7 @@ function CardMoveButton(object)
 end
 
 function CallActionButton(object, beforeORafter)
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     --1 before 2 after
     if CardData["ActionDisplayed"] == false then
         CardData["ActionDisplayed"] = true
@@ -169,14 +179,14 @@ end
 
 
 function CardActionButtonBefore(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         CallActionButton(object,1)
     end
 end
 
 function CardActionButtonAfter(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         CallActionButton(object,2)
     end
@@ -185,7 +195,7 @@ end
 
 
 function CardRangeButton(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         if CardData["RangeDisplayed"] == false then
             CardData["RangeDisplayed"] = true
@@ -198,7 +208,7 @@ function CardRangeButton(object)
 end
 
 function CardBoostLeft(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         if CardData["BoostDisplayed"] == false then
             CardData["BoostDisplayed"] = true
@@ -207,7 +217,7 @@ function CardBoostLeft(object)
     end
 end
 function CardBoostCenter(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         if CardData["BoostDisplayed"] == false then
             CardData["BoostDisplayed"] = true
@@ -216,7 +226,7 @@ function CardBoostCenter(object)
     end
 end
 function CardBoostRight(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         if CardData["BoostDisplayed"] == false then
             CardData["BoostDisplayed"] = true
@@ -225,7 +235,7 @@ function CardBoostRight(object)
     end
 end
 function CardBRLeftTop(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         if CardData["BarrelRollDisplayed"] == false then
             CardData["BarrelRollDisplayed"] = true
@@ -234,7 +244,7 @@ function CardBRLeftTop(object)
     end
 end
 function CardBRLeftCenter(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         if CardData["BarrelRollDisplayed"] == false then
             CardData["BarrelRollDisplayed"] = true
@@ -243,7 +253,7 @@ function CardBRLeftCenter(object)
     end
 end
 function CardBRLeftBack(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         if CardData["BarrelRollDisplayed"] == false then
             CardData["BarrelRollDisplayed"] = true
@@ -252,7 +262,7 @@ function CardBRLeftBack(object)
     end
 end
 function CardBRRightTop(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         if CardData["BarrelRollDisplayed"] == false then
             CardData["BarrelRollDisplayed"] = true
@@ -261,7 +271,7 @@ function CardBRRightTop(object)
     end
 end
 function CardRightCenter(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         if CardData["BarrelRollDisplayed"] == false then
             CardData["BarrelRollDisplayed"] = true
@@ -270,7 +280,7 @@ function CardRightCenter(object)
     end
 end
 function CardRightBack(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         if CardData["BarrelRollDisplayed"] == false then
             CardData["BarrelRollDisplayed"] = true
@@ -280,7 +290,7 @@ function CardRightBack(object)
 end
 
 function CardTargetLock(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         take(target, CardData["ShipGUID"],0.5,1,-0.5,true,CardData["Color"],CardData["ShipName"])
         notify(CardData["ShipGUID"],'action','acquires a target lock')
@@ -288,7 +298,7 @@ function CardTargetLock(object)
 end
 
 function CardFocusButton(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         take(focus, CardData["ShipGUID"],-0.5,1,-0.5,false,0,0)
         notify(CardData["ShipGUID"],'action','takes a focus token')
@@ -296,7 +306,7 @@ function CardFocusButton(object)
 end
 
 function CardStressButton(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         take(stress, CardData["ShipGUID"],0.5,1,0.5,false,0,0)
         notify(CardData["ShipGUID"],'action','takes stress')
@@ -304,7 +314,7 @@ function CardStressButton(object)
 end
 
 function CardEvadeButton(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         take(evade, CardData["ShipGUID"],-0.5,1,0.5,false,0,0)
         notify(CardData["ShipGUID"],'action','takes an evade token')
@@ -312,7 +322,7 @@ function CardEvadeButton(object)
 end
 
 function CardUndoButton(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         check(CardData["ShipGUID"],'undo')
         CardData["BoostDisplayed"] = false
@@ -321,7 +331,7 @@ function CardUndoButton(object)
 end
 
 function CardDeleteButton(object)
-    CardData = dialpositions[CardInArray(object.GetGUID())]
+    local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
         getObjectFromGUID(CardData["ShipGUID"]).setVar('HasDial',false)
         object.Unlock()
@@ -333,7 +343,7 @@ function CardDeleteButton(object)
 end
 
 function resetdials(guid,notice)
-    obj = getObjectFromGUID(guid)
+    local obj = getObjectFromGUID(guid)
     local index = {}
     for i, card in ipairs(dialpositions) do
         if guid == card["ShipGUID"] then
@@ -352,21 +362,21 @@ end
 
 function checkdials(guid)
     resetdials(guid,0)
-    obj = getObjectFromGUID(guid)
-    count = 0
-    display = false
-    error = false
-    deckerror = false
+    local obj = getObjectFromGUID(guid)
+    local count = 0
+    local display = false
+    local error = false
+    local deckerror = false
     for i,card in ipairs(getAllObjects()) do
-        cardpos = card.getPosition()
-        objpos = obj.getPosition()
+        local cardpos = card.getPosition()
+        local objpos = obj.getPosition()
         if distance(cardpos[1],cardpos[3],objpos[1],objpos[3]) < 5.5 then
             if cardpos[3] >= 18 or cardpos[3] <= -18 then
                 if card.tag == 'Card' and card.getDescription() ~= '' then
-                    CardData = dialpositions[CardInArray(card.getGUID())]
+                    local CardData = dialpositions[CardInArray(card.getGUID())]
                     if CardData == nil then
                         count = count + 1
-                        cardtable = {}
+                        local cardtable = {}
                         cardtable["GUID"] = card.getGUID()
                         cardtable["Position"] = card.getPosition()
                         cardtable["Rotation"] = card.getRotation()
@@ -412,15 +422,15 @@ function checkdials(guid)
 end
 
 function SpawnDialGuide(guid)
-    shipobject = getObjectFromGUID(guid)
-    world = shipobject.getPosition()
-    direction = shipobject.getRotation()
-    obj_parameters = {}
+    local shipobject = getObjectFromGUID(guid)
+    local world = shipobject.getPosition()
+    local direction = shipobject.getRotation()
+    local obj_parameters = {}
     obj_parameters.type = 'Custom_Model'
     obj_parameters.position = {world[1], world[2]+0.15, world[3]}
     obj_parameters.rotation = { 0, direction[2], 0 }
-    DialGuide = spawnObject(obj_parameters)
-    custom = {}
+    local DialGuide = spawnObject(obj_parameters)
+    local custom = {}
     custom.mesh = 'http://pastebin.com/raw/qPcTJZyP'
     custom.collider = 'http://pastebin.com/raw.php?i=UK3Urmw1'
 
@@ -441,9 +451,9 @@ end
 function update ()
     for i,ship in ipairs(getAllObjects()) do
         if ship.tag == 'Figurine' and ship.name ~= '' then
-            shipguid = ship.getGUID()
-            shipname = ship.getName()
-            shipdesc = ship.getDescription()
+            local shipguid = ship.getGUID()
+            local shipname = ship.getName()
+            local shipdesc = ship.getDescription()
             checkname(shipguid,shipdesc,shipname)
             check(shipguid,shipdesc)
         end
@@ -458,14 +468,17 @@ function round(x)
     --Can you be Deleted?
     return x>=0 and math.floor(x+0.5) or math.ceil(x-0.5)
 end
-
+local freshLock
 function take(parent, guid, xoff, yoff, zoff, TL, color, name)
-    obj = getObjectFromGUID(guid)
-    objp = getObjectFromGUID(parent)
-    world = obj.getPosition()
+    local obj = getObjectFromGUID(guid)
+    local objp = getObjectFromGUID(parent)
+    local world = obj.getPosition()
+
+    --VALADIAN Rotate Take to be relative position
+    local offset = RotateVector({xoff, yoff, zoff}, obj.getRotation()[2])
 
     local params = {}
-    params.position = {world[1]+xoff, world[2]+yoff, world[3]+zoff}
+    params.position = {world[1]+offset[1], world[2]+offset[2], world[3]+offset[3]}
     if TL == true then
         local callback_params = {}
         callback_params['player_color'] = color
@@ -483,12 +496,12 @@ end
 
 function undo(guid)
     if undolist[guid] ~= nil then
-        obj = getObjectFromGUID(guid)
+        local obj = getObjectFromGUID(guid)
         obj.setPosition(undopos[guid])
         obj.setRotation(undorot[guid])
         setpending(guid)
     else
-        obj = getObjectFromGUID(guid)
+        local obj = getObjectFromGUID(guid)
         setpending(guid)
     end
     obj.Unlock()
@@ -501,17 +514,17 @@ function distance(x,y,a,b)
 end
 
 function storeundo(guid)
-    obj = getObjectFromGUID(guid)
-    direction = obj.getRotation()
-    world = obj.getPosition()
+    local obj = getObjectFromGUID(guid)
+    local direction = obj.getRotation()
+    local world = obj.getPosition()
     undolist[guid] = guid
     undopos[guid] = world
     undorot[guid] = direction
 end
 
 function registername(guid)
-    obj = getObjectFromGUID(guid)
-    name = obj.getName()
+    local obj = getObjectFromGUID(guid)
+    local name = obj.getName()
     namelist1[guid] = name
     setlock(guid)
 end
@@ -526,28 +539,28 @@ end
 
 function fixname(guid)
     if namelist1[guid] ~= nil then
-        obj = getObjectFromGUID(guid)
+        local obj = getObjectFromGUID(guid)
         obj.setName(namelist1[guid])
     end
 end
 
 function setpending(guid)
     fixname(guid)
-    obj = getObjectFromGUID(guid)
+    local obj = getObjectFromGUID(guid)
     obj.setDescription('Pending')
 end
 
 function setlock(guid)
     fixname(guid)
-    obj = getObjectFromGUID(guid)
+    local obj = getObjectFromGUID(guid)
     obj.setVar('Lock',true)
     setpending(guid)
 end
 
 function checkpos(guid)
     setpending(guid)
-    obj = getObjectFromGUID(guid)
-    world = obj.getPosition()
+    local obj = getObjectFromGUID(guid)
+    local world = obj.getPosition()
     for i, v in ipairs(world) do
         print(v)
     end
@@ -555,8 +568,8 @@ end
 
 function checkrot(guid)
     setpending(guid)
-    obj = getObjectFromGUID(guid)
-    world = obj.getRotation()
+    local obj = getObjectFromGUID(guid)
+    local world = obj.getRotation()
     for i, v in ipairs(world) do
         print(v)
     end
@@ -564,18 +577,18 @@ end
 
 function ruler(guid,action)
     -- action for 1 for display button 2 for not
-    shipobject = getObjectFromGUID(guid)
-    shipname = shipobject.getName()
-    direction = shipobject.getRotation()
-    world = shipobject.getPosition()
-    scale = shipobject.getScale()
+    local shipobject = getObjectFromGUID(guid)
+    local shipname = shipobject.getName()
+    local direction = shipobject.getRotation()
+    local world = shipobject.getPosition()
+    local scale = shipobject.getScale()
 
-    obj_parameters = {}
+    local obj_parameters = {}
     obj_parameters.type = 'Custom_Model'
     obj_parameters.position = {world[1], world[2]+0.28, world[3]}
     obj_parameters.rotation = { 0, direction[2] +180, 0 }
-    newruler = spawnObject(obj_parameters)
-    custom = {}
+    local newruler = spawnObject(obj_parameters)
+    local custom = {}
     if isBigShip(guid) == true then
         custom.mesh = 'http://pastebin.com/raw/3AU6BBjZ'
         custom.collider = 'https://paste.ee/r/JavTd'
@@ -601,8 +614,8 @@ function actionButton(object)
 end
 
 function isBigShip(guid)
-    obj = getObjectFromGUID(guid)
-    Properties = obj.getCustomObject()
+    local obj = getObjectFromGUID(guid)
+    local Properties = obj.getCustomObject()
     for i,ship in pairs(BigShipList) do
         if Properties.collider == ship then
             return true
@@ -616,8 +629,8 @@ function notify(guid,move,text,ship)
     if text == nil then
         text = ''
     end
-    obj = getObjectFromGUID(guid)
-    name = obj.getName()
+    local obj = getObjectFromGUID(guid)
+    local name = obj.getName()
     if move == 'q' then
         printToAll(name .. ' executed undo.', {0, 1, 0})
     elseif move == 'set' then
@@ -775,8 +788,9 @@ function MiscMovement(guid,forwardDistance,type,direction,move,text)
     --direction = 0 left    1 right  2 forward
     --forwardDistance = distance to be traveled
     storeundo(guid)
-    obj = getObjectFromGUID(guid)
-    shipname = obj.getName()
+    local obj = getObjectFromGUID(guid)
+    local shipname = obj.getName()
+    local sidewaysDistance
     if type == 1 then
         --barrel roll
         sidewaysDistance = 2.8863945007324
@@ -801,11 +815,11 @@ function MiscMovement(guid,forwardDistance,type,direction,move,text)
             sidewaysDistance = 0
         end
     end
-    rot = obj.getRotation()
-    world = obj.getPosition()
-    radrotval = math.rad(rot[2])
-    xDistance = math.sin(radrotval) * forwardDistance * -1
-    zDistance = math.cos(radrotval) * forwardDistance * -1
+    local rot = obj.getRotation()
+    local world = obj.getPosition()
+    local radrotval = math.rad(rot[2])
+    local xDistance = math.sin(radrotval) * forwardDistance * -1
+    local zDistance = math.cos(radrotval) * forwardDistance * -1
     --left is - and + is right
     if direction == 0 then
         radrotval = radrotval - math.rad(90)
@@ -830,9 +844,9 @@ function turnShip(guid,radius,direction,type,kturn,move,text)
     --guid = ship moving
     -- move and text for notify
     storeundo(guid)
-    obj = getObjectFromGUID(guid)
-    rot = obj.getRotation()
-    pos = obj.getPosition()
+    local obj = getObjectFromGUID(guid)
+    local rot = obj.getRotation()
+    local pos = obj.getPosition()
     local degree = {}
     if type == 0 then
         degree = 45
@@ -841,15 +855,15 @@ function turnShip(guid,radius,direction,type,kturn,move,text)
     end
     local BumpingObjects = posbumps(guid, direction)
     local Bumped = {false, nil}
-    coords,theta = turncoords(guid,radius,direction,degree,type)
+    local coords,theta = turncoords(guid,radius,direction,degree,type)
     if BumpingObjects ~= nil then
         for k=#BumpingObjects ,1,-1 do
-            doescollide = collide(pos[1]+coords[1],pos[3]+coords[2],theta,guid,BumpingObjects[k]["Position"][1],BumpingObjects[k]["Position"][3],BumpingObjects[k]["Rotation"][2],BumpingObjects[k]["ShipGUID"])
+            local doescollide = collide(pos[1]+coords[1],pos[3]+coords[2],theta,guid,BumpingObjects[k]["Position"][1],BumpingObjects[k]["Position"][3],BumpingObjects[k]["Rotation"][2],BumpingObjects[k]["ShipGUID"])
             if doescollide == true then
                 for e2=degree, 1, -1 do
-                    checkdegree = e2
+                    local checkdegree = e2
                     coords,theta = turncoords(guid,radius,direction,checkdegree,type)
-                    doescollide2 = collide(pos[1]+coords[1],pos[3]+coords[2],theta,guid,BumpingObjects[k]["Position"][1],BumpingObjects[k]["Position"][3],BumpingObjects[k]["Rotation"][2],BumpingObjects[k]["ShipGUID"])
+                    local doescollide2 = collide(pos[1]+coords[1],pos[3]+coords[2],theta,guid,BumpingObjects[k]["Position"][1],BumpingObjects[k]["Position"][3],BumpingObjects[k]["Rotation"][2],BumpingObjects[k]["ShipGUID"])
                     if doescollide2 == false then
                         degree = checkdegree
                         Bumped = {true, k}
@@ -880,25 +894,25 @@ function straight(guid,forwardDistance,kturn,move,text)
     -- kturn true or false
     -- move and text for notify
     storeundo(guid)
-    obj = getObjectFromGUID(guid)
-    pos = obj.getPosition()
-    rot = obj.getRotation()
+    local obj = getObjectFromGUID(guid)
+    local pos = obj.getPosition()
+    local rot = obj.getRotation()
     if isBigShip(guid) == true then
         forwardDistance = 1.468 + forwardDistance
     end
     local Bumped = {false , nil}
     local BumpingObjects = posbumps(guid, 2)
-    xDistance = math.sin(math.rad(rot[2])) * forwardDistance * -1
-    zDistance = math.cos(math.rad(rot[2])) * forwardDistance * -1
+    local xDistance = math.sin(math.rad(rot[2])) * forwardDistance * -1
+    local zDistance = math.cos(math.rad(rot[2])) * forwardDistance * -1
     if BumpingObjects ~= nil then
         for k=#BumpingObjects ,1,-1 do
-            doescollide = collide(pos[1]+xDistance,pos[3]+zDistance,rot[2],guid,BumpingObjects[k]["Position"][1],BumpingObjects[k]["Position"][3],BumpingObjects[k]["Rotation"][2],BumpingObjects[k]["ShipGUID"])
+            local doescollide = collide(pos[1]+xDistance,pos[3]+zDistance,rot[2],guid,BumpingObjects[k]["Position"][1],BumpingObjects[k]["Position"][3],BumpingObjects[k]["Rotation"][2],BumpingObjects[k]["ShipGUID"])
             if doescollide == true then
                 for e2=100, 1, -1 do
-                    checkdistance = forwardDistance*(e2/100)
+                    local checkdistance = forwardDistance*(e2/100)
                     xDistance = math.sin(math.rad(rot[2])) * checkdistance * -1
                     zDistance = math.cos(math.rad(rot[2])) * checkdistance * -1
-                    doescollide2 = collide(pos[1]+xDistance,pos[3]+zDistance,rot[2],guid,BumpingObjects[k]["Position"][1],BumpingObjects[k]["Position"][3],BumpingObjects[k]["Rotation"][2],BumpingObjects[k]["ShipGUID"])
+                    local doescollide2 = collide(pos[1]+xDistance,pos[3]+zDistance,rot[2],guid,BumpingObjects[k]["Position"][1],BumpingObjects[k]["Position"][3],BumpingObjects[k]["Rotation"][2],BumpingObjects[k]["ShipGUID"])
                     if doescollide2 == false then
                         forwardDistance = checkdistance
                         Bumped = {true, k}
@@ -938,39 +952,39 @@ function turncoords(guid,radius,direction,theta,type)
         scale = scale * 2
     end
 
-    obj = getObjectFromGUID(guid)
-    rot = obj.getRotation()
-    pos = obj.getPosition()
-    xLeftDistance = pos[1] + radius * math.sin(math.rad(rot[2] + 135 - theta)) - radius * math.cos(math.rad(rot[2] + 135 - theta))
-    yLeftDistance = pos[3] + radius * math.cos(math.rad(rot[2] + 135 - theta)) + radius * math.sin(math.rad(rot[2] + 135 - theta))
-    xRightDistance = pos[1] + radius * math.sin(math.rad(rot[2] - 45 + theta)) - radius * math.cos(math.rad(rot[2] - 45 + theta))
-    yRightDistance = pos[3] + radius * math.cos(math.rad(rot[2] - 45 + theta)) + radius * math.sin(math.rad(rot[2] - 45 + theta))
+    local obj = getObjectFromGUID(guid)
+    local rot = obj.getRotation()
+    local pos = obj.getPosition()
+    local xLeftDistance = pos[1] + radius * math.sin(math.rad(rot[2] + 135 - theta)) - radius * math.cos(math.rad(rot[2] + 135 - theta))
+    local yLeftDistance = pos[3] + radius * math.cos(math.rad(rot[2] + 135 - theta)) + radius * math.sin(math.rad(rot[2] + 135 - theta))
+    local xRightDistance = pos[1] + radius * math.sin(math.rad(rot[2] - 45 + theta)) - radius * math.cos(math.rad(rot[2] - 45 + theta))
+    local yRightDistance = pos[3] + radius * math.cos(math.rad(rot[2] - 45 + theta)) + radius * math.sin(math.rad(rot[2] - 45 + theta))
 
-    rvector = {pos[1] + radius * math.sin(math.rad(rot[2]-45)) - radius * math.cos(math.rad(rot[2]-45)), pos[3] + radius * math.cos(math.rad(rot[2]-45)) + radius * math.sin(math.rad(rot[2]-45))}
-    rnvector = {math.sin(math.rad(rot[2] +90))* -1, math.cos(math.rad(rot[2]+90))* -1}
+    local rvector = {pos[1] + radius * math.sin(math.rad(rot[2]-45)) - radius * math.cos(math.rad(rot[2]-45)), pos[3] + radius * math.cos(math.rad(rot[2]-45)) + radius * math.sin(math.rad(rot[2]-45))}
+    local rnvector = {math.sin(math.rad(rot[2] +90))* -1, math.cos(math.rad(rot[2]+90))* -1}
     rnvector = getNormal(rnvector[1],rnvector[2])
     rnvector = {rnvector[1]*scale,rnvector[2]*scale}
 
-    lvector = {pos[1] + radius * math.sin(math.rad(rot[2]+135)) - radius * math.cos(math.rad(rot[2]+135)), pos[3] + radius * math.cos(math.rad(rot[2]+135)) + radius * math.sin(math.rad(rot[2]+135))}
-    lnvector = {math.sin(math.rad(rot[2] -90))* -1,  math.cos(math.rad(rot[2]-90))* -1}
+    local lvector = {pos[1] + radius * math.sin(math.rad(rot[2]+135)) - radius * math.cos(math.rad(rot[2]+135)), pos[3] + radius * math.cos(math.rad(rot[2]+135)) + radius * math.sin(math.rad(rot[2]+135))}
+    local lnvector = {math.sin(math.rad(rot[2] -90))* -1,  math.cos(math.rad(rot[2]-90))* -1}
     lnvector = getNormal(lnvector[1],lnvector[2])
     lnvector = {lnvector[1]*scale,lnvector[2]*scale}
 
-    fvector = {pos[1] + radius * math.sin(math.rad(rot[2]-135)) - radius * math.cos(math.rad(rot[2]-135)), pos[3] + radius * math.cos(math.rad(rot[2]-135)) + radius * math.sin(math.rad(rot[2]-135))}
-    fnvector = {math.sin(math.rad(rot[2])) * -1, math.cos(math.rad(rot[2])) * -1}
+    local fvector = {pos[1] + radius * math.sin(math.rad(rot[2]-135)) - radius * math.cos(math.rad(rot[2]-135)), pos[3] + radius * math.cos(math.rad(rot[2]-135)) + radius * math.sin(math.rad(rot[2]-135))}
+    local fnvector = {math.sin(math.rad(rot[2])) * -1, math.cos(math.rad(rot[2])) * -1}
     fnvector = getNormal(fnvector[1],fnvector[2])
     fnvector = {fnvector[1]*scale,fnvector[2]*scale}
 
-    fnhalfrvector = {math.sin(math.rad(rot[2]+45)) * -1, math.cos(math.rad(rot[2]+45)) * -1}
+    local fnhalfrvector = {math.sin(math.rad(rot[2]+45)) * -1, math.cos(math.rad(rot[2]+45)) * -1}
     fnhalfrvector = getNormal(fnhalfrvector[1],fnhalfrvector[2])
     fnhalfrvector = {fnhalfrvector[1]*scale,fnhalfrvector[2]*scale}
 
-    fnhalflvector = {math.sin(math.rad(rot[2]-45)) * -1, math.cos(math.rad(rot[2]-45)) * -1}
+    local fnhalflvector = {math.sin(math.rad(rot[2]-45)) * -1, math.cos(math.rad(rot[2]-45)) * -1}
     fnhalflvector = getNormal(fnhalflvector[1],fnhalflvector[2])
     fnhalflvector = {fnhalflvector[1]*scale,fnhalflvector[2]*scale}
 
-    newleftturnvector = {lvector[1]-xLeftDistance+ fnvector[1],lvector[2]-yLeftDistance+ fnvector[2]}
-    newrightturnvector = {rvector[1]-xRightDistance+ fnvector[1],rvector[2]-yRightDistance+ fnvector[2]}
+    local newleftturnvector = {lvector[1]-xLeftDistance+ fnvector[1],lvector[2]-yLeftDistance+ fnvector[2]}
+    local newrightturnvector = {rvector[1]-xRightDistance+ fnvector[1],rvector[2]-yRightDistance+ fnvector[2]}
 
     if type == 1 then
         if theta == 90 then
@@ -994,9 +1008,10 @@ end
 function posbumps(guid, direction)
     --direction 0 = left 1 = right 2 = forward
     --direction of bump check
-    obj = getObjectFromGUID(guid)
-    pos = obj.getPosition()
-    rot = obj.getRotation()
+    local obj = getObjectFromGUID(guid)
+    local pos = obj.getPosition()
+    local rot = obj.getRotation()
+    local rv,cv,lv,fv
 
     local scale = 0.734
     if isBigShip(guid) == true then
@@ -1016,15 +1031,15 @@ function posbumps(guid, direction)
     local Objects = {}
     for i,ship in ipairs(getAllObjects()) do
         if ship.tag == 'Figurine' and ship.name ~= '' and ship.getGUID() ~= guid then
-            shippos = ship.getPosition()
-            shiprot = ship.getRotation()
-            sfv = {shippos[1]-pos[1],shippos[3]-pos[3]}
-            scv = getNormal(sfv[1],sfv[2])
-            dot = dot2d({cv[1],cv[2]},{scv[1],scv[2]})
+            local shippos = ship.getPosition()
+            local shiprot = ship.getRotation()
+            local sfv = {shippos[1]-pos[1],shippos[3]-pos[3]}
+            local scv = getNormal(sfv[1],sfv[2])
+            local dot = dot2d({cv[1],cv[2]},{scv[1],scv[2]})
             if dot > 0 then
-                circledist = distance(pos[1],pos[3],shippos[1],shippos[3])
+                local circledist = distance(pos[1],pos[3],shippos[1],shippos[3])
                 if circledist < 8 then
-                    perp = calcPerpendicular({pos[1],pos[3]},{cv[1]+pos[1],cv[2]+pos[3]},{shippos[1],shippos[3]})
+                    local perp = calcPerpendicular({pos[1],pos[3]},{cv[1]+pos[1],cv[2]+pos[3]},{shippos[1],shippos[3]})
                     if perp < 3.2 then
                         local BumpTable = {}
                         BumpTable["Position"] = ship.getPosition()
@@ -1046,12 +1061,12 @@ function calcPerpendicular(a, b, c)
     -- a b c vectors x,y
     -- a b are points on the line
     -- c is the point to find distance to
-    slope1 = (b[2]-a[2])/(b[1]-a[1])
-    yint1 = a[2]-slope1*a[1]
-    slope2 = -(b[1]-a[1])/(b[2]-a[2])
-    yint2 = c[2]-slope2*c[1]
-    x = (yint2-yint1)/(slope1-slope2)
-    y = slope2*x+yint2
+    local slope1 = (b[2]-a[2])/(b[1]-a[1])
+    local yint1 = a[2]-slope1*a[1]
+    local slope2 = -(b[1]-a[1])/(b[2]-a[2])
+    local yint2 = c[2]-slope2*c[1]
+    local x = (yint2-yint1)/(slope1-slope2)
+    local y = slope2*x+yint2
     return distance(x,y,c[1],c[2])
 end
 
@@ -1067,8 +1082,8 @@ function getCorners(f,g,rotation,guid)
     world_coords[3] = {f + scale, g - scale}
     world_coords[4] = {f - scale, g - scale}
     for r, corr in ipairs(world_coords) do
-        xcoord = f + ((corr[1] - f) * math.sin(math.rad(rotation))) - ((corr[2] - g) * math.cos(math.rad(rotation)))
-        ycoord = g + ((corr[1] - f) * math.cos(math.rad(rotation))) + ((corr[2] - g) * math.sin(math.rad(rotation)))
+        local xcoord = f + ((corr[1] - f) * math.sin(math.rad(rotation))) - ((corr[2] - g) * math.cos(math.rad(rotation)))
+        local ycoord = g + ((corr[1] - f) * math.cos(math.rad(rotation))) + ((corr[2] - g) * math.sin(math.rad(rotation)))
         corners[r] = {xcoord,ycoord}
     end
     return corners
@@ -1113,4 +1128,10 @@ function collide(x1, y1, r1, guid1, x2, y2, r2, guid2)
         end
     end
     return true
+end
+
+function findObjectByNameAndType(name, type)
+    for i,obj in ipairs(getAllObjects()) do
+        if obj.getName()==name and obj.tag == type then return obj end
+    end
 end
