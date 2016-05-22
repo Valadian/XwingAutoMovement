@@ -758,7 +758,6 @@ function check(guid,move)
         MiscMovement(guid,0.73999404907227,2,1,move,'decloaked forward right')
     elseif move == 'crb' then
         MiscMovement(guid,-0.73999404907227,2,1,move,'decloak backwards right')
-
         -- MISC Commands
     elseif move == 'checkpos' then
         checkpos(guid)
@@ -1127,7 +1126,14 @@ function collide(x1, y1, r1, guid1, x2, y2, r2, guid2)
     end
     return true
 end
+function RotateVector(direction, yRotation)
 
+    local rotval = round(yRotation)
+    local radrotval = math.rad(rotval)
+    local xDistance = math.cos(radrotval) * direction[1] + math.sin(radrotval) * direction[3]
+    local zDistance = math.sin(radrotval) * direction[1] * -1 + math.cos(radrotval) * direction[3]
+    return {xDistance, direction[2], zDistance}
+end
 function findObjectByNameAndType(name, type)
     for i,obj in ipairs(getAllObjects()) do
         if obj.getName()==name and obj.tag == type then return obj end
