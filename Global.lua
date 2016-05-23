@@ -25,7 +25,7 @@ stress = nil --'a25e12'
 target = nil --'c81580'
 
 function onload()
-    --    enemy_target_locks = findObjectByNameAndType("Enemy Target Locks", "Infinite").getGUID()
+--    enemy_target_locks = findObjectByNameAndType("Enemy Target Locks", "Infinite").getGUID()
     focus = findObjectByNameAndType("Focus", "Infinite").getGUID()
     evade = findObjectByNameAndType("Evade", "Infinite").getGUID()
     stress = findObjectByNameAndType("Stress", "Infinite").getGUID()
@@ -50,12 +50,12 @@ function onObjectLeaveScriptingZone(zone, object)
                 CardData["LeftZone"] = true
                 CardData["HasButtons"] = true
                 local flipbutton = {['click_function'] = 'CardFlipButton', ['label'] = 'Flip', ['position'] = {0, -1, 1}, ['rotation'] =  {0, 0, 180}, ['width'] = 750, ['height'] = 550, ['font_size'] = 250}
-                object.createButton(flipbutton)
+        		object.createButton(flipbutton)
                 local deletebutton = {['click_function'] = 'CardDeleteButton', ['label'] = 'Delete', ['position'] = {0, -1, -1}, ['rotation'] =  {0, 0, 180}, ['width'] = 750, ['height'] = 550, ['font_size'] = 250}
                 object.createButton(deletebutton)
                 object.setVar('Lock',true)
             end
-        else
+    	else
             printToColor('That dial was not saved.', object.held_by_color, {0.2,0.2,0.8})
         end
     end
@@ -93,7 +93,7 @@ function PlayerCheck(Color, GUID)
 end
 
 function CardInArray(GUID)
-    local CIAPos
+    local CIAPos = nil
     for i, card in ipairs(dialpositions) do
         if GUID == card["GUID"] then
             CIAPos = i
@@ -344,9 +344,9 @@ end
 function CardUndoButton(object)
     local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
-        check(CardData["ShipGUID"],'undo')
         CardData["BoostDisplayed"] = false
         CardData["BarrelRollDisplayed"] = false
+        check(CardData["ShipGUID"],'undo')
     end
 end
 
@@ -537,16 +537,13 @@ function findObjectByNameAndType(name, type)
 end
 
 function undo(guid)
+    local obj = getObjectFromGUID(guid)
     if undolist[guid] ~= nil then
-        local obj = getObjectFromGUID(guid)
         obj.setPosition(undopos[guid])
         obj.setRotation(undorot[guid])
-        setpending(guid)
-    else
-        local obj = getObjectFromGUID(guid)
-        setpending(guid)
     end
     obj.Unlock()
+    setpending(guid)
 end
 
 function distance(x,y,a,b)
@@ -694,16 +691,16 @@ function notify(guid,move,text,ship)
 end
 
 function check(guid,move)
-    -- Ruler Commands
+        -- Ruler Commands
     if move == 'r' or move == 'ruler' then
         ruler(guid,1)
 
         -- Auto Dial Commands
     elseif move == 'sd' or move == 'storedial' or move == 'storedials' then
         if move == 'sd' then
-            checkdials(guid)
+          checkdials(guid)
         else
-            SpawnDialGuide(guid)
+          SpawnDialGuide(guid)
         end
     elseif move == 'rd' or move == 'removedial' or move == 'removedials' then
         resetdials(guid, 1)
@@ -769,7 +766,7 @@ function check(guid,move)
     elseif move == 'br2s' then
         turnShip(guid,5.490753857,1,0,true,move,'segnors looped right 2')
     elseif move == 'br3s' then
-        turnShip(guid,7.363015996,0,0,true,move,'segnors looped right 3')
+        turnShip(guid,7.363015996,1,0,true,move,'segnors looped right 3')
 
         -- Barrel Roll Commands
     elseif move == 'xl' or move == 'xe' then
@@ -893,12 +890,12 @@ function turnShip(guid,radius,direction,type,kturn,move,text)
     local coords,theta = turncoords(guid,radius,direction,degree,type)
     if BumpingObjects ~= nil then
         for k=#BumpingObjects ,1,-1 do
-            local doescollide = collide(pos[1]+coords[1],pos[3]+coords[2],theta,guid,BumpingObjects[k]["Position"][1],BumpingObjects[k]["Position"][3],BumpingObjects[k]["Rotation"][2],BumpingObjects[k]["ShipGUID"])
+            local doescollide = collide(pos[1]+coords[1],pos[3]+coords[2],rot[2]+theta,guid,BumpingObjects[k]["Position"][1],BumpingObjects[k]["Position"][3],BumpingObjects[k]["Rotation"][2],BumpingObjects[k]["ShipGUID"])
             if doescollide == true then
                 for e2=degree, 1, -1 do
                     local checkdegree = e2
                     coords,theta = turncoords(guid,radius,direction,checkdegree,type)
-                    local doescollide2 = collide(pos[1]+coords[1],pos[3]+coords[2],theta,guid,BumpingObjects[k]["Position"][1],BumpingObjects[k]["Position"][3],BumpingObjects[k]["Rotation"][2],BumpingObjects[k]["ShipGUID"])
+                    local doescollide2 = collide(pos[1]+coords[1],pos[3]+coords[2],rot[2]+theta,guid,BumpingObjects[k]["Position"][1],BumpingObjects[k]["Position"][3],BumpingObjects[k]["Rotation"][2],BumpingObjects[k]["ShipGUID"])
                     if doescollide2 == false then
                         degree = checkdegree
                         Bumped = {true, k}
