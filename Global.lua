@@ -9,7 +9,6 @@ undolist = {}
 undopos = {}
 undorot = {}
 namelist1 = {}
-locktimer = {}
 
 --Auto Dials
 dialpositions = {}
@@ -18,18 +17,19 @@ dialpositions = {}
 BigShipList = {'https://paste.ee/r/LIxnJ','https://paste.ee/r/v9OYL','https://paste.ee/r/XoXqn','https://paste.ee/r/oOjRN','https://paste.ee/r/v8OYL','https://paste.ee/r/xBpMo','https://paste.ee/r/k4DLM','https://paste.ee/r/JavTd','http://pastebin.com/Tg5hdRTM'}
 
 -- Auto Actions
-enemy_target_locks = nil
+--enemy_target_locks = nil
+freshLock = nil
 focus = nil --'beca0f'
 evade = nil --'4a352e'
 stress = nil --'a25e12'
 target = nil --'c81580'
 
 function onload()
-    enemy_target_locks = findObjectByNameAndType("Enemy Target Locks", "Infinite").getGUID()
+    --    enemy_target_locks = findObjectByNameAndType("Enemy Target Locks", "Infinite").getGUID()
     focus = findObjectByNameAndType("Focus", "Infinite").getGUID()
     evade = findObjectByNameAndType("Evade", "Infinite").getGUID()
     stress = findObjectByNameAndType("Stress", "Infinite").getGUID()
-    target = findObjectByNameAndType("Target Lock", "Infinite").getGUID()
+    target = findObjectByNameAndType("Target Locks", "Infinite").getGUID()
 end
 
 function onObjectLeaveScriptingZone(zone, object)
@@ -38,20 +38,36 @@ function onObjectLeaveScriptingZone(zone, object)
         if CardData ~= nil then
             local obj = getObjectFromGUID(CardData["ShipGUID"])
             if obj.getVar('HasDial') == true then
-                printToColor(CardData["ShipName"] .. ' already has a dial.', object.held_by_color, {0.2,0.2,0.8})
+                ---DELETE ME (if statement) but keep the print
+                if CardData["HasButtons"] == false then
+                    printToColor(CardData["ShipName"] .. ' already has a dial.', object.held_by_color, {0.2,0.2,0.8})
+                else
+                    CardData["LeftZone"] = true
+                end
             else
                 obj.setVar('HasDial', true)
                 CardData["Color"] = object.held_by_color
-
+                CardData["LeftZone"] = true
+                CardData["HasButtons"] = true
                 local flipbutton = {['click_function'] = 'CardFlipButton', ['label'] = 'Flip', ['position'] = {0, -1, 1}, ['rotation'] =  {0, 0, 180}, ['width'] = 750, ['height'] = 550, ['font_size'] = 250}
                 object.createButton(flipbutton)
                 local deletebutton = {['click_function'] = 'CardDeleteButton', ['label'] = 'Delete', ['position'] = {0, -1, -1}, ['rotation'] =  {0, 0, 180}, ['width'] = 750, ['height'] = 550, ['font_size'] = 250}
                 object.createButton(deletebutton)
-
                 object.setVar('Lock',true)
             end
         else
             printToColor('That dial was not saved.', object.held_by_color, {0.2,0.2,0.8})
+        end
+    end
+end
+
+
+function onObjectEnterScriptingZone(zone, object)
+    ---DELETE ME ALL OF ME HERE
+    if dialpositions[1] ~= nil then
+        local CardData = dialpositions[CardInArray(object.GetGUID())]
+        if CardData ~= nil then
+            CardData["LeftZone"] = false
         end
     end
 end
@@ -61,8 +77,16 @@ function PlayerCheck(Color, GUID)
     if getPlayer(Color) ~= nil then
         local HandPos = getPlayer(Color).getPointerPosition()
         local DialPos = getObjectFromGUID(GUID).getPosition()
+        ---DELETE ME
+        local CardData = dialpositions[CardInArray(GUID)]
+        -----
         if distance(HandPos['x'],HandPos['z'],DialPos['x'],DialPos['z']) < 2 then
-            PC = true
+            ----DELETE ME THE IF KEEP THE PC=TRUE
+            if CardData["LeftZone"] == true then
+                PC = true
+            else
+                printToColor('Due to TTS Bug -- cannot use buttons down here. Unlock. Drag to main play area and click buttons there.', CardData["Color"], {0.4,0.6,0.2})
+            end
         end
     end
     return PC
@@ -77,6 +101,7 @@ function CardInArray(GUID)
     end
     return CIAPos
 end
+
 
 function CardFlipButton(object)
     local CardData = dialpositions[CardInArray(object.GetGUID())]
@@ -175,7 +200,6 @@ function CallActionButton(object, beforeORafter)
     end
 end
 
-
 function CardActionButtonBefore(object)
     local CardData = dialpositions[CardInArray(object.GetGUID())]
     if PlayerCheck(CardData["Color"],CardData["GUID"]) == true then
@@ -189,8 +213,6 @@ function CardActionButtonAfter(object)
         CallActionButton(object,2)
     end
 end
-
-
 
 function CardRangeButton(object)
     local CardData = dialpositions[CardInArray(object.GetGUID())]
@@ -336,7 +358,11 @@ function CardDeleteButton(object)
         object.clearButtons()
         object.setPosition (CardData["Position"])
         object.setRotation (CardData["Rotation"])
+        object.setVar('Lock',false)
         CardData["Color"] = nil
+        ---DELETE ME x2
+        CardData["HasButtons"] = false
+        CardData["LeftZone"] = false
     end
 end
 
@@ -386,6 +412,10 @@ function checkdials(guid)
                         cardtable["RangeDisplayed"] = false
                         cardtable["RulerObject"] = nil
                         cardtable["Color"] = nil
+                        ---DELETE ME
+                        cardtable["LeftZone"] = false
+                        cardtable["HasButtons"] = false
+                        --------END DELETE ME
                         obj.setVar('HasDial',false)
                         dialpositions[#dialpositions +1] = cardtable
                         card.setName(obj.getName())
@@ -466,7 +496,7 @@ function round(x)
     --Can you be Deleted?
     return x>=0 and math.floor(x+0.5) or math.ceil(x-0.5)
 end
-local freshLock
+
 function take(parent, guid, xoff, yoff, zoff, TL, color, name)
     local obj = getObjectFromGUID(guid)
     local objp = getObjectFromGUID(parent)
@@ -490,6 +520,20 @@ end
 
 function setNewLock(object, params)
     freshLock.call('manualSet', {params['player_color'], params['ship_name']})
+end
+
+function RotateVector(direction, yRotation)
+    local rotval = round(yRotation)
+    local radrotval = math.rad(rotval)
+    local xDistance = math.cos(radrotval) * direction[1] + math.sin(radrotval) * direction[3]
+    local zDistance = math.sin(radrotval) * direction[1] * -1 + math.cos(radrotval) * direction[3]
+    return {xDistance, direction[2], zDistance}
+end
+
+function findObjectByNameAndType(name, type)
+    for i,obj in ipairs(getAllObjects()) do
+        if obj.getName()==name and obj.tag == type then return obj end
+    end
 end
 
 function undo(guid)
@@ -622,7 +666,6 @@ function isBigShip(guid)
     return false
 end
 
-
 function notify(guid,move,text,ship)
     if text == nil then
         text = ''
@@ -651,7 +694,6 @@ function notify(guid,move,text,ship)
 end
 
 function check(guid,move)
-
     -- Ruler Commands
     if move == 'r' or move == 'ruler' then
         ruler(guid,1)
@@ -758,6 +800,7 @@ function check(guid,move)
         MiscMovement(guid,0.73999404907227,2,1,move,'decloaked forward right')
     elseif move == 'crb' then
         MiscMovement(guid,-0.73999404907227,2,1,move,'decloak backwards right')
+
         -- MISC Commands
     elseif move == 'checkpos' then
         checkpos(guid)
@@ -775,9 +818,6 @@ function check(guid,move)
         notify(guid,'q')
     end
 end
-
-
-
 
 function MiscMovement(guid,forwardDistance,type,direction,move,text)
     --guid = ship moving
@@ -831,8 +871,6 @@ function MiscMovement(guid,forwardDistance,type,direction,move,text)
     notify(guid,move,text)
 end
 
-
-
 function turnShip(guid,radius,direction,type,kturn,move,text)
     --radius = turn radius
     --direction = 0  - left  1 - right
@@ -882,8 +920,6 @@ function turnShip(guid,radius,direction,type,kturn,move,text)
     end
     setlock(guid)
 end
-
-
 
 function straight(guid,forwardDistance,kturn,move,text)
     -- guid = ship moving
@@ -1125,17 +1161,4 @@ function collide(x1, y1, r1, guid1, x2, y2, r2, guid2)
         end
     end
     return true
-end
-function RotateVector(direction, yRotation)
-
-    local rotval = round(yRotation)
-    local radrotval = math.rad(rotval)
-    local xDistance = math.cos(radrotval) * direction[1] + math.sin(radrotval) * direction[3]
-    local zDistance = math.sin(radrotval) * direction[1] * -1 + math.cos(radrotval) * direction[3]
-    return {xDistance, direction[2], zDistance}
-end
-function findObjectByNameAndType(name, type)
-    for i,obj in ipairs(getAllObjects()) do
-        if obj.getName()==name and obj.tag == type then return obj end
-    end
 end
